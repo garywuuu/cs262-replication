@@ -2,6 +2,7 @@ import socket
 import threading 
 import fnmatch
 import _thread
+import sqlite3
 
 class Thread(threading.Thread):
 	def __init__(self, t, *args):
@@ -21,11 +22,15 @@ active_users = []
 undelivered_messages = {}
 
 # For each user, create thread
-def threaded(user):
+def threaded(user, conn):
 	# At the start of the session, track username 
-	# Helpful since our data structures use username as keys
+	# Helpful since our data structures use username as key
+	
 	user.send(("What's your username?").encode('UTF-8'))
 	username = (user.recv(1024)).decode('UTF-8')
+	conn = sqlite3.connect('./chat.db'); c = conn.cursor()
+	c.execute("INSERT INTO users (?,?)", (username, user))
+
 
 	# Duplicate bool tracks whether multiple IP's are trying to use the same account/username
 	duplicate = False 
@@ -183,6 +188,11 @@ def main():
 	server.bind((IP, port))
 	server.listen(100)
 	print("Listening on port " + str(port))
+
+	conn = sqlite3.connect('./chat.db')
+	c = conn.cursor()
+	c.execute("CREATE TABLE accounts (name TEXT, ip TEXT)")
+	c.execute("CREATE TABLE messages (id INTEGER, message TEXT)")
 	
 	while True:
 		# Each new user connecting to server
@@ -190,7 +200,7 @@ def main():
 		print (addr[0] + " connected")	
 		print('Connected to :', addr[0], ':', addr[1])
 		# Start new thread
-		_thread.start_new_thread(threaded, (user,))
+		_thread.start_new_thread(threaded, (user, c))
 	server.close()
 
 if __name__=='__main__':
