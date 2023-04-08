@@ -1,4 +1,3 @@
-
 import threading
 import grpc
 
@@ -6,7 +5,7 @@ import chat_pb2 as chat
 import chat_pb2_grpc as rpc
 
 address = 'localhost'
-port = 11912
+port = 13504
 
 
 class Client:
@@ -14,7 +13,7 @@ class Client:
     def __init__(self):
         # create a gRPC channel + stub
         self.username = None
-        channel = grpc.insecure_channel(address + ':' + str(port))
+        channel = grpc.insecure_channel(address + ':' + str(port), options=(('grpc.enable_http_proxy', 0),))
         self.conn = rpc.ChatServerStub(channel)
 
     # thread creation separate from instantiation. called when username set.
@@ -166,6 +165,7 @@ if __name__ == '__main__':
                         print("Account deletion cancelled.")
                 else:
                     print("Please enter a valid command.")
+
     except KeyboardInterrupt: # catch the ctrl+c keyboard interrupt
         if c.username is not None:
             temp = c.logout()
