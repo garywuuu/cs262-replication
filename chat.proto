@@ -4,23 +4,46 @@ package grpc;
 
 message Empty {}
 
-message IsMasterRequest{}
-
-message IsMasterReply{
-    bool master = 1;
-}
-
-message ServConnectRequest{
-    int32 port = 1;
-}
-
-message ServConnectReply{
+message CommitRequest{
     int32 port = 1;
     string sender = 2;
     string receiver = 3;
     string message = 4;
     bool active = 5;
 }
+
+message CommitReply{
+    bool success = 6;
+    string error = 7;
+}
+
+message AddConnectRequest{
+    int32 requester_port = 1;
+    int32 replier_port = 2;
+}
+
+message AddConnectReply{
+    bool success = 1;
+    string error = 2;
+}
+
+message IsMasterRequest{}
+
+message IsMasterReply{
+    bool master = 1;
+}
+
+// message ServConnectRequest{
+//     int32 port = 1;
+// }
+
+// message ServConnectReply{
+//     int32 port = 1;
+//     string sender = 2;
+//     string receiver = 3;
+//     string message = 4;
+//     bool active = 5;
+// }
 
 
 message MessageRequest {
@@ -94,7 +117,7 @@ message DeleteReply {
 service ChatServer {
     // request-stream setup to send requests, then continuously receive reply
     rpc ChatStream (ConnectRequest) returns (stream ConnectReply); 
-    rpc ServStream (ServConnectRequest) returns (stream ServConnectReply); 
+    // rpc ServStream (ServConnectRequest) returns (stream ServConnectReply); 
     // other functions are simple RPCs
     rpc SendMessage (MessageRequest) returns (MessageReply);
     rpc Signup (SignupRequest) returns (SignupReply);
@@ -105,4 +128,6 @@ service ChatServer {
     
     // replication edit
     rpc IsMasterQuery (IsMasterRequest) returns (IsMasterReply);
+    rpc AddConnect (AddConnectRequest) returns (AddConnectReply);
+    rpc Commit (CommitRequest) returns (CommitReply);
 }

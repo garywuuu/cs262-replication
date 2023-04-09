@@ -43,14 +43,19 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
                 if self.clients[recipient]["queue"].qsize() > 0: 
                     n = self.clients[recipient]["queue"].get(block=False)
                     # pushes message to queue to send to secondaries
-                    servMessage = chat.ServConnectReply()
+                    servMessage = chat.CommitRequest()
                     servMessage.port = self.port
                     servMessage.sender = n.sender
                     servMessage.recipient = n.recipient
                     servMessage.message = n.message
                     servMessage.active = n.active
                     for port in self.conns: # add to each connection queue
-                        self.conns[port]["queue"].put(servMessage) 
+                        # self.conns[port]["queue"].put(servMessage) 
+                        reply = self.commit(port, servMessage)
+                        if reply.success:
+                            print("ACK received from port {} commit".format(port))
+                        else:
+                            print(reply.error)
                     yield n 
 
     def SendMessage(self, request: chat.MessageRequest, context):
@@ -166,28 +171,27 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             n.error = "No user found."
         return n
     
-    def ServStream(self, request: chat.ServConnectRequest,context): 
-        port = request.port
-        print("Connection made between {} and {}".format(self.port, port))
-            # infinite loop starts for each client
-        while True:
-            if self.is_master: # if we are primary
-                if self.conns[port]["queue"].qsize() > 0: #queue of things to send to secondary
-                    n = self.conns[port]["queue"].get(block=False)
-                    yield n 
-
+    # def ServStream(self, request: chat.ServConnectRequest,context): 
+    #     port = request.port
+    #     print("Connection made between {} and {}".format(self.port, port))
+    #         # infinite loop starts for each client
+    #     while True:
+    #         if self.is_master: # if we are primary
+    #             if self.conns[port]["queue"].qsize() > 0: #queue of things to send to secondary
+    #                 n = self.conns[port]["queue"].get(block=False)
+    #                 yield n 
     
-    def __listen_for_messages(self, port):
-        """
-        This method will be ran in a separate thread as the main/ui thread, because the for-in call is blocking
-        when waiting for new messages
-        """
-        n = chat.ServConnectRequest()
-        n.port = self.port
-        print(self.conns)
-        # continuously wait for new messages from the server!
-        for servConnectReply in self.conns[port]["conn"].ServStream(n):  
-            print(servConnectReply.message) # placeholder
+    # def __listen_for_messages(self, port):
+    #     """
+    #     This method will be ran in a separate thread as the main/ui thread, because the for-in call is blocking
+    #     when waiting for new messages
+    #     """
+    #     n = chat.ServConnectRequest()
+    #     n.port = self.port
+    #     print(self.conns)
+    #     # continuously wait for new messages from the server!
+    #     for servConnectReply in self.conns[port]["conn"].ServStream(n):  
+    #         print(servConnectReply.message) # placeholder
 
     def is_master_query(self,conn):
         n = chat.IsMasterRequest()
@@ -207,6 +211,40 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             return True 
         except grpc.FutureTimeoutError: 
             return False
+        
+    def add_connect(self, port):
+        # "client" server tells "server" server to connect back
+        n = chat.AddConnectRequest()
+        n.requester_port = self.port
+        n.replier_port = port 
+        reply = self.conns[port].AddConnect(n)
+        return reply
+    
+    def AddConnect(self, request: chat.AddConnectRequest, context):
+        # "server" server receives request to connect back
+        port = request.requester_port
+        print("Receive connect request from {}".format(port))
+        channel = grpc.insecure_channel(address + ':' + str(port))
+        self.conns[port] = rpc.ChatServerStub(channel)
+        print("Connection successful")
+        n = chat.AddConnectReply()
+        n.success = True
+        n.error = "Connection back to client-server failed"
+        return n
+    
+    def commit(self, port, request: chat.CommitRequest):
+        # primary server tells secondary server to write
+        reply = self.conns[port].Commit(request)
+        return reply
+    
+    def Commit(self, request: chat.CommitRequest, context): 
+        # write to database here
+        print("Received request to write to database")
+        print("{} to {}: {}".format(request.sender, request.receiver, request.message))
+        n = chat.CommitReply()
+        n.success = True 
+        n.error = "Write to database failed"
+        return n
     
     def connect(self):
         for i in ports: 
@@ -214,10 +252,10 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
                 channel = grpc.insecure_channel(address + ':' + str(i))
                 if self.test_server_activity(channel): # check if active
                     print("Port {} is active".format(i))
-                    self.conns[i] = {}
-                    self.conns[i]["conn"] = rpc.ChatServerStub(channel) # add connection
-                    self.conns[i]["queue"] = queue.SimpleQueue() # instantiate queue to send messages to secondaries
-                    threading.Thread(target=self.__listen_for_messages(i), daemon=True).start()
+                    self.conns[i] = rpc.ChatServerStub(channel) # add connection
+                    self.add_connect(i)
+                    # self.conns[i]["queue"] = queue.SimpleQueue() # instantiate queue to send messages to secondaries
+                    # threading.Thread(target=self.__listen_for_messages(i), daemon=True).start()
         time.sleep(2)
         master_found = False
         for port in self.conns:
