@@ -41,16 +41,15 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             with lock:
                 # active = self.c.execute("SELECT active FROM accounts WHERE username = ?", (recipient,))
                 messages = self.c.execute("SELECT message FROM messages WHERE recipient = ?", (recipient,)).fetchall()
+                active = self.c.execute("SELECT active FROM accounts WHERE username = ?", (recipient,)).fetchone()
             # Check if recipient is active, if they have queued messages
 
-            if len(messages) > 0:
+            if active == "TRUE" and len(messages) > 0:
                 with lock: 
                     message = self.c.execute("SELECT message FROM messages WHERE recipient = ?", (recipient,)).fetchone()
                     sender = self.c.execute("SELECT * FROM messages WHERE recipient = ?", (recipient,)).fetchone()
                     rowid = self.c.execute("SELECT rowid, * FROM messages WHERE recipient = ?", (recipient,)).fetchone()
                     self.c.execute("DELETE FROM messages WHERE rowid = ?", (rowid,))
-                print(message)
-                print(rowid)
                 forward = chat.ConnectReply()
                 forward.active = True # not disconnecting
                 forward.sender = sender
@@ -80,10 +79,10 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             forward.message = message 
             with lock: 
                 self.c.execute("INSERT INTO messages VALUES (?,?,?)", (sender, recipient, message))
-                active = self.c.execute("SELECT active FROM accounts WHERE username = (?)", (recipient,))
+                active = self.c.execute("SELECT active FROM accounts WHERE username = ?", (recipient,)).fetchone()
             # reply with overall sendMessage success + print debugging statements
             n.success = True
-            active = str(active)
+            print(active)
             if active == "TRUE":
                 print("Sent: [{} -> {}] {}".format(sender,recipient,message))
             else: 
@@ -104,7 +103,7 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             # add new user dictionary to client dictionary
             # initiate empty thread-safe queue for msgs
             with lock:
-                self.c.execute("INSERT INTO accounts VALUES (?, ?)", (username, 1)) 
+                self.c.execute("INSERT INTO accounts VALUES (?, ?)", (username, "TRUE")) 
             # self.clients[username] = {"active": True, "queue": queue.SimpleQueue()}
             print("New user {} has arrived!".format(username))
             n.success = True
@@ -193,7 +192,7 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
         return n
 
 if __name__ == '__main__':
-    port = 13543
+    port = 13547
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # create a gRPC server
     rpc.add_ChatServerServicer_to_server(ChatServer(), server)  # register the server to gRPC
     print('Starting server. Listening...')
