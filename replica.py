@@ -213,6 +213,7 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             if i != self.port:  # all other possible servers except self
                 channel = grpc.insecure_channel(address + ':' + str(i))
                 if self.test_server_activity(channel): # check if active
+                    print("Port {} is active".format(i))
                     self.conns[i] = {}
                     self.conns[i]["conn"] = rpc.ChatServerStub(channel) # add connection
                     self.conns[i]["queue"] = queue.SimpleQueue() # instantiate queue to send messages to secondaries
