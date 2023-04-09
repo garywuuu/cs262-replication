@@ -193,12 +193,12 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
     #     for servConnectReply in self.conns[port]["conn"].ServStream(n):  
     #         print(servConnectReply.message) # placeholder
 
-    def is_master_query(self,conn):
+    def is_master_query(self,port):
         n = chat.IsMasterRequest()
-        reply = conn.IsMasterQuery(n)
+        reply = self.conns[port].IsMasterQuery(n)
         return reply 
     
-    def IsMasterQuery(self, request: chat.IsMasterRequest):
+    def IsMasterQuery(self, request: chat.IsMasterRequest, context):
         n = chat.IsMasterReply()
         n.master = self.is_master
         return n
@@ -260,11 +260,11 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
         master_found = False
         for port in self.conns:
             # n = chat.IsMasterRequest()
-            reply = self.is_master_query(self.conns[port]["conn"])
+            reply = self.is_master_query(port)
             if reply.master:
                 master_found = True
                 self.master = port
-                print("Master found at port ", str(port))
+                print("Master found at port {}".format(port))
                 break
         if not master_found:
             # if len(self.conns) > 0:
