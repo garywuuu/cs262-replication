@@ -6,7 +6,8 @@ import queue
 import fnmatch
 import random
 import threading
-
+import os
+import shutil
 
 import chat_pb2 as chat
 import chat_pb2_grpc as rpc
@@ -23,6 +24,18 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
         with lock:
             conn = sqlite3.connect(filename, check_same_thread=False)
             conn.row_factory = lambda cursor, row: row[0]
+        # times = []
+        # for i in ports:
+        #     path = "C:\desktop\cs262-replication\chat{}.db".format(i)
+        #     times.append(os.path.getmtime(path))
+        # if min(times) == os.path.getmtime("C:\desktop\cs262-replication\chat{}.db".format(self.port)):
+        #     for i in ports:
+        #         if i != self.port:
+        #             src = "C:\Desktop\cs262-replication\grpcwire\chat{}.db".format(self.port)
+        #     # dest contains the path of the destination file
+        #             dest = "C:\Desktop\cs262-replication\grpcwire\chat{}.db".format(i)
+        #             path = shutil.copyfile(src,dest)
+
         self.c = conn.cursor()
         self.c.execute("CREATE TABLE IF NOT EXISTS accounts (username TEXT, active TEXT)")
         self.c.execute("CREATE TABLE IF NOT EXISTS messages (sender TEXT, recipient TEXT, message TEXT)")
@@ -57,20 +70,10 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
                     self.c.execute("DELETE FROM messages WHERE rowid = ?", (rowid,))
                 
                 # Create structure of message to forward to other servers
-                forward = chat.ConnectReply(); servMessage = chat.CommitRequest()
-                forward.active = True; servMessage.active = True
-                forward.message = message; servMessage.message = message # not disconnecting
-                forward.sender = sender; servMessage.sender = sender; 
-                forward.recipient = recipient; servMessage.receiver = recipient
+                forward = chat.ConnectReply(); forward.active = True
+                forward.message = message; forward.sender = sender # not disconnecting
+                forward.sender = sender; forward.recipient = recipient
                 
-                servMessage.port = self.port
-                for port in self.conns: # add to each connection queue
-                    # self.conns[port]["queue"].put(servMessage) 
-                    reply = self.commit(port, servMessage)
-                    if reply.success:
-                        print("ACK received from port {} commit".format(port))
-                    else:
-                        print(reply.error)
                 yield forward
 
 
@@ -93,6 +96,16 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
                 self.c.execute("INSERT INTO messages VALUES (?,?,?)", (sender, recipient, message))
                 active = self.c.execute("SELECT active FROM accounts WHERE username = ?", (recipient,)).fetchone()
             # reply with overall sendMessage success + print debugging statements
+            servMessage = chat.CommitRequest(); servMessage.port = self.port
+            servMessage.active = True; servMessage.message = message
+            servMessage.sender = sender; servMessage.receiver = recipient
+            for port in self.conns: # add to each connection queue
+                    # self.conns[port]["queue"].put(servMessage) 
+                    reply = self.commit(port, servMessage)
+                    if reply.success:
+                        print("ACK received from port {} commit".format(port))
+                    else:
+                        print(reply.error)
             n.success = True
             if active == "TRUE":
                 print("Sent: [{} -> {}] {}".format(sender,recipient,message))
@@ -115,7 +128,19 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             # add new user dictionary to client dictionary
             # initiate empty thread-safe queue for msgs
             with lock:
-                self.c.execute("INSERT INTO accounts VALUES (?, ?)", (username, "TRUE")) 
+                self.c.execute("INSERT INTO accounts VALUES (?,?)", (username, "TRUE"))
+            
+            servMessage = chat.CommitRequest(); servMessage.port = self.port
+            servMessage.active = True; servMessage.message = f"INSERT INTO accounts VALUES ({username},TRUE)"# not disconnecting
+            servMessage.sender = ""; servMessage.receiver = username
+                
+            for port in self.conns: # add to each connection queue
+                    # self.conns[port]["queue"].put(servMessage) 
+                reply = self.commit(port, servMessage)
+                if reply.success:
+                    print("ACK received from port {} commit".format(port))
+                else:
+                    print(reply.error)
             # self.clients[username] = {"active": True, "queue": queue.SimpleQueue()}
             print("New user {} has arrived!".format(username))
             n.success = True
@@ -193,28 +218,7 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             n.success = False
             n.error = "No user found."
         return n
-    
-    # def ServStream(self, request: chat.ServConnectRequest,context): 
-    #     port = request.port
-    #     print("Connection made between {} and {}".format(self.port, port))
-    #         # infinite loop starts for each client
-    #     while True:
-    #         if self.is_master: # if we are primary
-    #             if self.conns[port]["queue"].qsize() > 0: #queue of things to send to secondary
-    #                 n = self.conns[port]["queue"].get(block=False)
-    #                 yield n 
-    
-    # def __listen_for_messages(self, port):
-    #     """
-    #     This method will be ran in a separate thread as the main/ui thread, because the for-in call is blocking
-    #     when waiting for new messages
-    #     """
-    #     n = chat.ServConnectRequest()
-    #     n.port = self.port
-    #     print(self.conns)
-    #     # continuously wait for new messages from the server!
-    #     for servConnectReply in self.conns[port]["conn"].ServStream(n):  
-    #         print(servConnectReply.message) # placeholder
+ 
 
     def is_master_query(self,port):
         n = chat.IsMasterRequest()
@@ -257,15 +261,21 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
     
     def commit(self, port, request: chat.CommitRequest):
         # primary server tells secondary server to write
-
         reply = self.conns[port].Commit(request)
         return reply
     
     def Commit(self, request: chat.CommitRequest, context): 
         # write to database here
         print("Received request to write to database")
-        print("{} to {}: {}".format(request.sender, request.receiver, request.message))
+        if request.sender != "":
+            with lock:
+                self.c.execute("INSERT INTO messages VALUES (?, ?, ?)", (request.sender, request.receiver, request.message))
+        else:
+            with lock:
+                self.c.execute("INSERT INTO accounts VALUES (?, ?)", (request.receiver, "TRUE"))
         n = chat.CommitReply()
+
+        print(request.message)
         n.success = True 
         n.error = "Write to database failed"
         return n
