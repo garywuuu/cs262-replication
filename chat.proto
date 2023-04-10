@@ -1,0 +1,145 @@
+syntax = "proto3"; // the version at the time of writing
+
+package grpc;
+
+message Empty {}
+
+message DisconnectRequest{
+    int32 requester_port = 1;
+    int32 replier_port = 2;
+    bool is_master = 3;
+}
+
+message DisconnectReply{
+    bool success = 1;
+    string error = 2;
+}
+
+message CommitRequest{
+    int32 port = 1;
+    string sender = 2;
+    string receiver = 3;
+    string message = 4;
+    bool active = 5;
+}
+
+message CommitReply{
+    bool success = 6;
+    string error = 7;
+}
+
+message AddConnectRequest{
+    int32 requester_port = 1;
+    int32 replier_port = 2;
+}
+
+message AddConnectReply{
+    bool success = 1;
+    string error = 2;
+}
+
+message IsMasterRequest{}
+
+message IsMasterReply{
+    bool master = 1;
+}
+
+// message ServConnectRequest{
+//     int32 port = 1;
+// }
+
+// message ServConnectReply{
+//     int32 port = 1;
+//     string sender = 2;
+//     string receiver = 3;
+//     string message = 4;
+//     bool active = 5;
+// }
+
+
+message MessageRequest {
+    string sender = 1;
+    string recipient = 2;
+    string message = 3;
+}
+
+message MessageReply {
+    bool success = 1;
+    string error = 2;
+}
+
+message ConnectRequest {
+    string recipient = 1;
+}
+
+message ConnectReply {
+    string sender = 1;
+    string recipient = 2;
+    string message = 3;
+    bool active = 4;
+}
+
+message SignupRequest {
+    string username = 1;
+}
+
+message SignupReply {
+    bool success = 1;
+    string error = 2;
+}
+
+message LoginRequest {
+    string username = 1;
+}
+
+message LoginReply {
+    bool success = 1;
+    string error = 2;
+}
+
+message LogoutRequest {
+    string username = 1;
+}
+
+message LogoutReply {
+    bool success = 1;
+    string error = 2;
+}
+
+message ListRequest {
+    string query = 1;
+}
+
+message ListReply {
+    bool success = 1;
+    string error = 2;
+    repeated string users = 3;
+}
+
+message DeleteRequest {
+    string username = 1;
+}
+
+message DeleteReply {
+    bool success = 1;
+    string error = 2;
+}
+
+service ChatServer {
+    // request-stream setup to send requests, then continuously receive reply
+    rpc ChatStream (ConnectRequest) returns (stream ConnectReply); 
+    // rpc ServStream (ServConnectRequest) returns (stream ServConnectReply); 
+    // other functions are simple RPCs
+    rpc SendMessage (MessageRequest) returns (MessageReply);
+    rpc Signup (SignupRequest) returns (SignupReply);
+    rpc Login (LoginRequest) returns (LoginReply);
+    rpc Logout (LogoutRequest) returns (LogoutReply);
+    rpc List (ListRequest) returns (ListReply);
+    rpc Delete (DeleteRequest) returns (DeleteReply);
+    
+    // replication edit
+    rpc IsMasterQuery (IsMasterRequest) returns (IsMasterReply);
+    rpc AddConnect (AddConnectRequest) returns (AddConnectReply);
+    rpc Commit (CommitRequest) returns (CommitReply);
+    rpc Disconnect (DisconnectRequest) returns (DisconnectReply);
+}
