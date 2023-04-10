@@ -24,7 +24,7 @@ class Client:
         for port in servers:
             self.channel = grpc.insecure_channel(address + ':' + str(port))
             if self.test_server_activity(self.channel):
-                print("Server at port {} is active".format(i))
+                print("Server at port {} is active".format(port))
                 self.conn = rpc.ChatServerStub(self.channel) # add connection
                 reply = self.is_master_query(port)
                 if reply.master: # connection is master
@@ -150,7 +150,7 @@ class Client:
         
     def is_master_query(self,port):
         n = chat.IsMasterRequest()
-        reply = self.conns[port].IsMasterQuery(n)
+        reply = self.conn.IsMasterQuery(n)
         return reply 
     
     def reconnect_server(self):
@@ -165,7 +165,7 @@ class Client:
             if port != failed_port: # not the one that just disconnected
                 self.channel = grpc.insecure_channel(address + ':' + str(port))
                 if self.test_server_activity(self.channel):
-                    print("Server at port {} is active".format(i))
+                    print("Server at port {} is active".format(port))
                     self.conn = rpc.ChatServerStub(self.channel) # add connection
                     reply = self.is_master_query(port)
                     if reply.master: # connection is master
@@ -179,7 +179,6 @@ class Client:
             print("Error: no connection found.")
         if self.master is None: # no master found
             print("Error: no master found.")
-
 
 
 if __name__ == '__main__':
@@ -241,13 +240,8 @@ if __name__ == '__main__':
                                 print("Account deletion cancelled.")
                         else:
                             print("Please enter a valid command.")
-            # except grpc._channel._InactiveRpcError:
-            #     time.sleep(1) # servers need time to figure out who is master
-            #     c.reconnect_server()
-            # except grpc._channel._MultiThreadedRendezvous:
             except:
                 c.channel.close() # important
-                c.conn.close()
                 time.sleep(1) # servers need time to figure out who is master
                 c.reconnect_server()
     except KeyboardInterrupt: # catch the ctrl+c keyboard interrupt

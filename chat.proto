@@ -4,6 +4,17 @@ package grpc;
 
 message Empty {}
 
+message DisconnectRequest{
+    int32 requester_port = 1;
+    int32 replier_port = 2;
+    bool is_master = 3;
+}
+
+message DisconnectReply{
+    bool success = 1;
+    string error = 2;
+}
+
 message CommitRequest{
     int32 port = 1;
     string sender = 2;
@@ -130,4 +141,5 @@ service ChatServer {
     rpc IsMasterQuery (IsMasterRequest) returns (IsMasterReply);
     rpc AddConnect (AddConnectRequest) returns (AddConnectReply);
     rpc Commit (CommitRequest) returns (CommitReply);
+    rpc Disconnect (DisconnectRequest) returns (DisconnectReply);
 }

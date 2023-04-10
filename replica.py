@@ -21,6 +21,7 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
         self.master = None
         self.port = port
         self.clients = {}
+        self.channels = {} # lel this could be in conns but no
         self.conns = {} # dict of all connections to other servers, key=port
 
         self.connect()
@@ -224,8 +225,8 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
         # "server" server receives request to connect back
         port = request.requester_port
         print("Receive connect request from {}".format(port))
-        channel = grpc.insecure_channel(address + ':' + str(port))
-        self.conns[port] = rpc.ChatServerStub(channel)
+        self.channels[port] = grpc.insecure_channel(address + ':' + str(port))
+        self.conns[port] = rpc.ChatServerStub(self.channels[port])
         print("Connection successful")
         n = chat.AddConnectReply()
         n.success = True
@@ -249,17 +250,15 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
     def connect(self):
         for i in ports: 
             if i != self.port:  # all other possible servers except self
-                channel = grpc.insecure_channel(address + ':' + str(i))
-                if self.test_server_activity(channel): # check if active
+                self.channels[i] = grpc.insecure_channel(address + ':' + str(i))
+                if self.test_server_activity(self.channels[i]): # check if active
                     print("Port {} is active".format(i))
-                    self.conns[i] = rpc.ChatServerStub(channel) # add connection
+                    self.conns[i] = rpc.ChatServerStub(self.channels[i])
                     self.add_connect(i)
-                    # self.conns[i]["queue"] = queue.SimpleQueue() # instantiate queue to send messages to secondaries
-                    # threading.Thread(target=self.__listen_for_messages(i), daemon=True).start()
-        time.sleep(2)
+                else: # delete inactive channel from dict
+                    del self.channels[i]
         master_found = False
         for port in self.conns:
-            # n = chat.IsMasterRequest()
             reply = self.is_master_query(port)
             if reply.master:
                 master_found = True
@@ -267,18 +266,75 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
                 print("Master found at port {}".format(port))
                 break
         if not master_found:
-            # if len(self.conns) > 0:
-            #     print("initiate master finding procedure")
             self.is_master = True # for now just make self master
             print("No master found; I am the master")
 
+    def disconnect(self, target_port):
+        # "client" server tells "server" server to disconnect
+        n = chat.DisconnectRequest()
+        n.requester_port = self.port
+        n.replier_port = target_port 
+        n.is_master = self.is_master
+        reply = self.conns[target_port].Disconnect(n)
+        if reply.success:
+            print("Port {} successfully disconnected".format(target_port))
+            del self.conns[target_port] # remove from active conns
+            self.channels[target_port].close() # close channel
+            del self.channels[target_port]
+        else:
+            print(reply.error)
+        # return reply     
 
+    def Disconnect(self, request: chat.DisconnectRequest, context):
+        # "server" server receives request to disconnect
+        port = request.requester_port
+        print("Received discconnect request from {}".format(port))
+        del self.conns[port] # remove from active conns
+        self.channels[port].close() # close channel
+        del self.channels[port]
+        print("Disconnect successful")
+        n = chat.DisconnectReply()
+        n.success = True
+        n.error = "Disconnect back to client-server failed"
+        if request.is_master: # disconnected server was the master
+            self.find_new_master()
+        return n
+
+    def disconnect_all(self):
+        # server tells all connected servers to shut down conns and channels
+        # replies = []
+        print("Connections:",list(self.conns.keys()))
+        for port in list(self.conns.keys()):
+            print("Disconnecting from {}".format(port))
+            self.disconnect(port)
+        #     reply = self.disconnect(port)
+        #     replies.append(reply)
+        # return replies
+    
+    def find_new_master(self):
+        print("Finding new master")
+        active_ports = list(self.conns.keys()) + [self.port]
+        active_ports.sort()
+        print("Active ports:", active_ports)
+        new_master = active_ports[0]
+        self.master = new_master
+        if new_master == self.port:
+            self.is_master = True
+            print("I am now the master")
+        else:
+            print("Port {} is the new master".format(new_master))
+        
+                
 if __name__ == '__main__':
     port = int(input("Input port number from one of [2056,3056,4056]: "))
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # create a gRPC server
-    rpc.add_ChatServerServicer_to_server(ChatServer(port), server)  # register the server to gRPC
-    print('Starting server. Listening...')
-    server.add_insecure_port('[::]:' + str(port))
-    server.start()
-    while True:
-        time.sleep(64 * 64 * 100)
+    chat_server = ChatServer(port)    
+    try: 
+        rpc.add_ChatServerServicer_to_server(chat_server, server)  # register the server to gRPC
+        print('Starting server. Listening...')
+        server.add_insecure_port('[::]:' + str(port))
+        server.start()
+        while True:
+            time.sleep(64 * 64 * 100)
+    except:
+        chat_server.disconnect_all()
