@@ -14,12 +14,15 @@ import chat_pb2_grpc as rpc
 
 # address = 'localhost'
 # ports = [2056,3056,4056]
-gary = "65.112.8.24"
-jessica = "65.112.8.50"
+# gary = "65.112.8.24"
+# gary = "172.20.10.3"
+gary = "10.250.145.248"
+# jessica = "65.112.8.50"
+jessica = "10.250.135.58"
 ports = {
-    2056: "65.112.8.50", #jessica
-    3056: "65.112.8.24", #gary
-    4056: "65.112.8.50"
+    2056: jessica, #jessica
+    3056: gary,
+    4056: jessica
 }
 lock = threading.Lock()
 
@@ -262,7 +265,7 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
         # "server" server receives request to connect back
         port = request.requester_port
         print("Receive connect request from {}".format(port))
-        self.channels[port] = grpc.insecure_channel(address + ':' + str(port))
+        self.channels[port] = grpc.insecure_channel(ports[port] + ':' + str(port))
         self.conns[port] = rpc.ChatServerStub(self.channels[port])
         print("Connection successful")
         n = chat.AddConnectReply()

@@ -8,14 +8,15 @@ import chat_pb2 as chat
 import chat_pb2_grpc as rpc
 
 # address = 'localhost'
-# port = 11912
-# servers = [2056,3056,4056]
-gary = "65.112.8.24"
-jessica = "65.112.8.50"
+# ports = [2056,3056,4056]
+# gary = "65.112.8.24"
+# jessica = "65.112.8.50"
+gary = "10.250.145.248"
+jessica = "10.250.135.58"
 servers = {
-    2056: "65.112.8.50", #jessica
-    3056: "65.112.8.24", #gary
-    4056: "65.112.8.50"
+    2056: jessica, #jessica
+    3056: gary,
+    4056: jessica
 }
 
 class Client:
