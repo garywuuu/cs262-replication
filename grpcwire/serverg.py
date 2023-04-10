@@ -4,58 +4,75 @@ import grpc
 import time
 import queue
 import fnmatch
+import random
 import threading
+
+
 import chat_pb2 as chat
 import chat_pb2_grpc as rpc
 
+address = 'localhost'
+ports = [2056,3056,4056]
 lock = threading.Lock()
+
 class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf rpc file which is generated
 
-    def __init__(self):
+    def __init__(self,port):
+        self.port = port
+        filename = "./chat{}.db".format(port)
         with lock:
-            conn = sqlite3.connect('./chat.db', check_same_thread=False)
+            conn = sqlite3.connect(filename, check_same_thread=False)
             conn.row_factory = lambda cursor, row: row[0]
-            self.c = conn.cursor()
-        self.queue = {}
-        # self.c.execute("CREATE TABLE accounts (username TEXT, active TEXT)")
-        # self.c.execute("CREATE TABLE messages (sender TEXT, recipient TEXT, message TEXT)")
-        # id = c.execute("SELECT id FROM messages ORDER BY timestamp DESC LIMIT 1")
+        self.c = conn.cursor()
+        self.c.execute("CREATE TABLE IF NOT EXISTS accounts (username TEXT, active TEXT)")
+        self.c.execute("CREATE TABLE IF NOT EXISTS messages (sender TEXT, recipient TEXT, message TEXT)")
+        self.is_master = False
+        self.master = None
+        self.conns = {} # dict of all connections to other servers, key (port) -> value (connection)
 
+        self.connect()
 
     # The stream which will be used to send new messages to clients
     def ChatStream(self, request: chat.ConnectRequest, context):
         """
         This is a response-stream type call. This means the server can keep sending messages
         Every client opens this connection and waits for server to send new messages
-
         :param request_iterator:
         :param context:
         :return:
         """
         recipient = request.recipient
-        # counter = 0 
-        # last_id = 0
         # infinite loop starts for each client
         while True:
             # Check if recipient is active, if they have queued messages
             with lock:
-                # active = self.c.execute("SELECT active FROM accounts WHERE username = ?", (recipient,))
                 messages = self.c.execute("SELECT message FROM messages WHERE recipient = ?", (recipient,)).fetchall()
-                active = self.c.execute("SELECT active FROM accounts WHERE username = ?", (recipient,)).fetchone()
             # Check if recipient is active, if they have queued messages
 
-            if active == "TRUE" and len(messages) > 0:
+            if len(messages) > 0:
                 with lock: 
                     message = self.c.execute("SELECT message FROM messages WHERE recipient = ?", (recipient,)).fetchone()
                     sender = self.c.execute("SELECT * FROM messages WHERE recipient = ?", (recipient,)).fetchone()
                     rowid = self.c.execute("SELECT rowid, * FROM messages WHERE recipient = ?", (recipient,)).fetchone()
                     self.c.execute("DELETE FROM messages WHERE rowid = ?", (rowid,))
-                forward = chat.ConnectReply()
-                forward.active = True # not disconnecting
-                forward.sender = sender
-                forward.recipient = recipient
-                forward.message = message
+                
+                # Create structure of message to forward to other servers
+                forward = chat.ConnectReply(); servMessage = chat.CommitRequest()
+                forward.active = True; servMessage.active = True
+                forward.message = message; servMessage.message = message # not disconnecting
+                forward.sender = sender; servMessage.sender = sender; 
+                forward.recipient = recipient; servMessage.receiver = recipient
+                
+                servMessage.port = self.port
+                for port in self.conns: # add to each connection queue
+                    # self.conns[port]["queue"].put(servMessage) 
+                    reply = self.commit(port, servMessage)
+                    if reply.success:
+                        print("ACK received from port {} commit".format(port))
+                    else:
+                        print(reply.error)
                 yield forward
+
 
     def SendMessage(self, request: chat.MessageRequest, context):
         # parse out request
@@ -72,23 +89,18 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             n.error = "Recipient not found."
         else:
             # regardless of whether user is active, we'll push to queue
-            forward = chat.ConnectReply()
-            forward.active = True # not disconnecting
-            forward.sender = sender
-            forward.recipient = recipient
-            forward.message = message 
             with lock: 
                 self.c.execute("INSERT INTO messages VALUES (?,?,?)", (sender, recipient, message))
                 active = self.c.execute("SELECT active FROM accounts WHERE username = ?", (recipient,)).fetchone()
             # reply with overall sendMessage success + print debugging statements
             n.success = True
-            print(active)
             if active == "TRUE":
                 print("Sent: [{} -> {}] {}".format(sender,recipient,message))
             else: 
                 print("Queued: [{} -> {}] {}".format(sender,recipient,message))
         return n
     
+
     def Signup(self, request: chat.SignupRequest, context):
         n = chat.SignupReply()
         username = request.username
@@ -116,6 +128,8 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
         with lock:
             usernames = self.c.execute("SELECT username FROM accounts").fetchall()
             active = self.c.execute("SELECT active FROM accounts WHERE username = (?)", (username,))
+
+        # if user doesn't exist
         if username not in usernames:
             n.success = False
             n.error = "No existing user found."
@@ -123,20 +137,13 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
         else:    
             # check if duplicate active user
             if active == "TRUE":
-                n.success = False
-                n.error = "You are already logged in elsewhere."
+                n.success = False; n.error = "You are already logged in elsewhere."
                 print("Duplicate user login request from {}.".format(username))
             else:
                 # temporarily store user queue
                 with lock:
                     self.c.execute("UPDATE accounts SET active = 'TRUE' WHERE username = (?)", (username,))
-                # queued = self.clients[username]["queue"]
-                # self.clients[username]["queue"] = queue.SimpleQueue()
-                # # once user activated, then re-queue undelivered messages
-                # self.clients[username]["active"] = True
-                # self.clients[username]["queue"] = queued
-                print("{} logged back in!".format(username))
-                n.success = True
+                print("{} logged back in!".format(username)); n.success = True
         return n
 
     def Logout(self, request: chat.LogoutRequest, context):
@@ -149,16 +156,12 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             print("Nonexistent user logout request from {}".format(username,))
         else:
             # send disconenct message through chatstream
-            disconnect = chat.ConnectReply()
-            disconnect.active = False
-            # self.clients[username]["queue"].put(disconnect)
+            disconnect = chat.ConnectReply(); disconnect.active = False
             # after disconnect message goes through, then set inactive
-            # self.clients[username]["active"] = False
             with lock: 
                 self.c.execute("UPDATE accounts SET active = 'FALSE' WHERE username = (?)", (username,))
             n.success = True
             print("{} left the chat.".format(username))
-        print("finishes logout")
         return n
 
     def List(self, request: chat.ListRequest, context):
@@ -190,11 +193,114 @@ class ChatServer(rpc.ChatServerServicer):  # inheriting here from the protobuf r
             n.success = False
             n.error = "No user found."
         return n
+    
+    # def ServStream(self, request: chat.ServConnectRequest,context): 
+    #     port = request.port
+    #     print("Connection made between {} and {}".format(self.port, port))
+    #         # infinite loop starts for each client
+    #     while True:
+    #         if self.is_master: # if we are primary
+    #             if self.conns[port]["queue"].qsize() > 0: #queue of things to send to secondary
+    #                 n = self.conns[port]["queue"].get(block=False)
+    #                 yield n 
+    
+    # def __listen_for_messages(self, port):
+    #     """
+    #     This method will be ran in a separate thread as the main/ui thread, because the for-in call is blocking
+    #     when waiting for new messages
+    #     """
+    #     n = chat.ServConnectRequest()
+    #     n.port = self.port
+    #     print(self.conns)
+    #     # continuously wait for new messages from the server!
+    #     for servConnectReply in self.conns[port]["conn"].ServStream(n):  
+    #         print(servConnectReply.message) # placeholder
+
+    def is_master_query(self,port):
+        n = chat.IsMasterRequest()
+        reply = self.conns[port].IsMasterQuery(n)
+        return reply 
+    
+    def IsMasterQuery(self, request: chat.IsMasterRequest, context):
+        n = chat.IsMasterReply()
+        n.master = self.is_master
+        return n
+
+    
+    def test_server_activity(self,channel): # test if a given server is active
+        TIMEOUT_SEC = random.randint(1,3) # each server can timeout differently
+        try: 
+            grpc.channel_ready_future(channel).result(timeout=TIMEOUT_SEC) 
+            return True 
+        except grpc.FutureTimeoutError: 
+            return False
+        
+    def add_connect(self, port):
+        # "client" server tells "server" server to connect back
+        n = chat.AddConnectRequest()
+        n.requester_port = self.port
+        n.replier_port = port 
+        reply = self.conns[port].AddConnect(n)
+        return reply
+    
+    def AddConnect(self, request: chat.AddConnectRequest, context):
+        # "server" server receives request to connect back
+        port = request.requester_port
+        print("Receive connect request from {}".format(port))
+        channel = grpc.insecure_channel(address + ':' + str(port))
+        self.conns[port] = rpc.ChatServerStub(channel)
+        print("Connection successful")
+        n = chat.AddConnectReply()
+        n.success = True
+        n.error = "Connection back to client-server failed"
+        return n
+    
+    def commit(self, port, request: chat.CommitRequest):
+        # primary server tells secondary server to write
+
+        reply = self.conns[port].Commit(request)
+        return reply
+    
+    def Commit(self, request: chat.CommitRequest, context): 
+        # write to database here
+        print("Received request to write to database")
+        print("{} to {}: {}".format(request.sender, request.receiver, request.message))
+        n = chat.CommitReply()
+        n.success = True 
+        n.error = "Write to database failed"
+        return n
+    
+    def connect(self):
+        for i in ports: 
+            if i != self.port:  # all other possible servers except self
+                channel = grpc.insecure_channel(address + ':' + str(i))
+                if self.test_server_activity(channel): # check if active
+                    print("Port {} is active".format(i))
+                    self.conns[i] = rpc.ChatServerStub(channel) # add connection
+                    self.add_connect(i)
+                    # self.conns[i]["queue"] = queue.SimpleQueue() # instantiate queue to send messages to secondaries
+                    # threading.Thread(target=self.__listen_for_messages(i), daemon=True).start()
+        time.sleep(2)
+        master_found = False
+        for port in self.conns:
+            # n = chat.IsMasterRequest()
+            reply = self.is_master_query(port)
+            if reply.master:
+                master_found = True
+                self.master = port
+                print("Master found at port {}".format(port))
+                break
+        if not master_found:
+            # if len(self.conns) > 0:
+            #     print("initiate master finding procedure")
+            self.is_master = True # for now just make self master
+            print("No master found; I am the master")
+
 
 if __name__ == '__main__':
-    port = 13547
+    port = int(input("Input port number from one of [2056,3056,4056]: "))
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # create a gRPC server
-    rpc.add_ChatServerServicer_to_server(ChatServer(), server)  # register the server to gRPC
+    rpc.add_ChatServerServicer_to_server(ChatServer(port), server)  # register the server to gRPC
     print('Starting server. Listening...')
     server.add_insecure_port('[::]:' + str(port))
     server.start()
