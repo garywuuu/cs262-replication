@@ -9,6 +9,12 @@ Run ``python3 -m replica`` in the replica directory. Each server process will in
 ### For Clients:
  Run ``python3 -m clientg`` in base directory. 
 
+### Fault Tolerance:
+This implementation implements Fault Tolerance through the use of the Master/Secondary replication model, where all client interaction is done with the master server, and the master forwards that request to the secondary replicas. Upon the secondaries acknowledging that they have written the request to their sqlite databases, the master then carries out the request. The servers each know who the master is at any given time, so if the master goes down, the lowest port secondary will take over as master and the clients will automatically connect to the new master. Since the secondaries have the most updated state in their databases, no messages are lost. 
+
+### Persistence: 
+The sqlite3 database is written to at every step for each replica, so in the case that all servers go down, we still have the most updated state of what was done before all the servers went down. 
+
 ### Command Documentation:
 #### Signup and Login:
 Upon starting up the client, you'll be given the options to either sign up or log in. The prompt will specify the available commands ``Enter 1|{Username} to sign up or 2|{Username} to log in:``. 
