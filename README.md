@@ -4,10 +4,10 @@
 Clone the repository on each local computer that will be using the network (all clients and the server). 
 
 ### For Server:
-Run ``python3 -m server`` in the grpcwire directory. If successful, you'll see a ``Starting server. Listening...``. This will allow the server to start listening to new clients that join and their commands. As clients join and make requests, important updates will be printed to the server command line. 
+Run ``python3 -m replica`` in the replica directory. Each server process will input a different port. Leader election is done such that the lowest port number is chosen if there is no current leader. If successful, you'll see a ``Starting server. Listening...``. Connect the other two clients in separate processes with different port numbers, and they will create connections between each other. This will allow the server to start listening to new clients that join and their commands. As clients join and make requests, important updates will be printed to the server command line. 
 
 ### For Clients:
- Run ``python3 -m client`` in grpcwire directory. 
+ Run ``python3 -m clientg`` in base directory. 
 
 ### Command Documentation:
 #### Signup and Login:
