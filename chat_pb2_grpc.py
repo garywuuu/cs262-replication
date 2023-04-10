@@ -64,6 +64,11 @@ class ChatServerStub(object):
                 request_serializer=chat__pb2.CommitRequest.SerializeToString,
                 response_deserializer=chat__pb2.CommitReply.FromString,
                 )
+        self.Disconnect = channel.unary_unary(
+                '/grpc.ChatServer/Disconnect',
+                request_serializer=chat__pb2.DisconnectRequest.SerializeToString,
+                response_deserializer=chat__pb2.DisconnectReply.FromString,
+                )
 
 
 class ChatServerServicer(object):
@@ -133,6 +138,12 @@ class ChatServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Disconnect(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ChatServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -185,6 +196,11 @@ def add_ChatServerServicer_to_server(servicer, server):
                     servicer.Commit,
                     request_deserializer=chat__pb2.CommitRequest.FromString,
                     response_serializer=chat__pb2.CommitReply.SerializeToString,
+            ),
+            'Disconnect': grpc.unary_unary_rpc_method_handler(
+                    servicer.Disconnect,
+                    request_deserializer=chat__pb2.DisconnectRequest.FromString,
+                    response_serializer=chat__pb2.DisconnectReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -363,5 +379,22 @@ class ChatServer(object):
         return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/Commit',
             chat__pb2.CommitRequest.SerializeToString,
             chat__pb2.CommitReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Disconnect(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/Disconnect',
+            chat__pb2.DisconnectRequest.SerializeToString,
+            chat__pb2.DisconnectReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

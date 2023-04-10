@@ -46,6 +46,7 @@ class Client:
         if self.username is not None:
             # create new listening thread for when new message streams come in
             threading.Thread(target=self.__listen_for_messages, daemon=True).start()
+            print("Thread started: listening for messages from", str(self.master))
 
     def __listen_for_messages(self):
         """
@@ -170,6 +171,7 @@ class Client:
                     reply = self.is_master_query(port)
                     if reply.master: # connection is master
                         self.master = port
+                        self.thread() # starts listening
                         print("Master found at port {}".format(port))
                         break
                     else: 

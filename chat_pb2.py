@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\nchat.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"`\n\rCommitRequest\x12\x0c\n\x04port\x18\x01 \x01(\x05\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x10\n\x08receiver\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\x12\x0e\n\x06\x61\x63tive\x18\x05 \x01(\x08\"-\n\x0b\x43ommitReply\x12\x0f\n\x07success\x18\x06 \x01(\x08\x12\r\n\x05\x65rror\x18\x07 \x01(\t\"A\n\x11\x41\x64\x64\x43onnectRequest\x12\x16\n\x0erequester_port\x18\x01 \x01(\x05\x12\x14\n\x0creplier_port\x18\x02 \x01(\x05\"1\n\x0f\x41\x64\x64\x43onnectReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"\x11\n\x0fIsMasterRequest\"\x1f\n\rIsMasterReply\x12\x0e\n\x06master\x18\x01 \x01(\x08\"D\n\x0eMessageRequest\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x11\n\trecipient\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\".\n\x0cMessageReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"#\n\x0e\x43onnectRequest\x12\x11\n\trecipient\x18\x01 \x01(\t\"R\n\x0c\x43onnectReply\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x11\n\trecipient\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\x12\x0e\n\x06\x61\x63tive\x18\x04 \x01(\x08\"!\n\rSignupRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"-\n\x0bSignupReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\" \n\x0cLoginRequest\x12\x10\n\x08username\x18\x01 \x01(\t\",\n\nLoginReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"!\n\rLogoutRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"-\n\x0bLogoutReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"\x1c\n\x0bListRequest\x12\r\n\x05query\x18\x01 \x01(\t\":\n\tListReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\x12\r\n\x05users\x18\x03 \x03(\t\"!\n\rDeleteRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"-\n\x0b\x44\x65leteReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t2\x9d\x04\n\nChatServer\x12\x38\n\nChatStream\x12\x14.grpc.ConnectRequest\x1a\x12.grpc.ConnectReply0\x01\x12\x37\n\x0bSendMessage\x12\x14.grpc.MessageRequest\x1a\x12.grpc.MessageReply\x12\x30\n\x06Signup\x12\x13.grpc.SignupRequest\x1a\x11.grpc.SignupReply\x12-\n\x05Login\x12\x12.grpc.LoginRequest\x1a\x10.grpc.LoginReply\x12\x30\n\x06Logout\x12\x13.grpc.LogoutRequest\x1a\x11.grpc.LogoutReply\x12*\n\x04List\x12\x11.grpc.ListRequest\x1a\x0f.grpc.ListReply\x12\x30\n\x06\x44\x65lete\x12\x13.grpc.DeleteRequest\x1a\x11.grpc.DeleteReply\x12;\n\rIsMasterQuery\x12\x15.grpc.IsMasterRequest\x1a\x13.grpc.IsMasterReply\x12<\n\nAddConnect\x12\x17.grpc.AddConnectRequest\x1a\x15.grpc.AddConnectReply\x12\x30\n\x06\x43ommit\x12\x13.grpc.CommitRequest\x1a\x11.grpc.CommitReplyb\x06proto3'
+  serialized_pb=b'\n\nchat.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"T\n\x11\x44isconnectRequest\x12\x16\n\x0erequester_port\x18\x01 \x01(\x05\x12\x14\n\x0creplier_port\x18\x02 \x01(\x05\x12\x11\n\tis_master\x18\x03 \x01(\x08\"1\n\x0f\x44isconnectReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"`\n\rCommitRequest\x12\x0c\n\x04port\x18\x01 \x01(\x05\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x10\n\x08receiver\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\x12\x0e\n\x06\x61\x63tive\x18\x05 \x01(\x08\"-\n\x0b\x43ommitReply\x12\x0f\n\x07success\x18\x06 \x01(\x08\x12\r\n\x05\x65rror\x18\x07 \x01(\t\"A\n\x11\x41\x64\x64\x43onnectRequest\x12\x16\n\x0erequester_port\x18\x01 \x01(\x05\x12\x14\n\x0creplier_port\x18\x02 \x01(\x05\"1\n\x0f\x41\x64\x64\x43onnectReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"\x11\n\x0fIsMasterRequest\"\x1f\n\rIsMasterReply\x12\x0e\n\x06master\x18\x01 \x01(\x08\"D\n\x0eMessageRequest\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x11\n\trecipient\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\".\n\x0cMessageReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"#\n\x0e\x43onnectRequest\x12\x11\n\trecipient\x18\x01 \x01(\t\"R\n\x0c\x43onnectReply\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x11\n\trecipient\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\x12\x0e\n\x06\x61\x63tive\x18\x04 \x01(\x08\"!\n\rSignupRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"-\n\x0bSignupReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\" \n\x0cLoginRequest\x12\x10\n\x08username\x18\x01 \x01(\t\",\n\nLoginReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"!\n\rLogoutRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"-\n\x0bLogoutReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"\x1c\n\x0bListRequest\x12\r\n\x05query\x18\x01 \x01(\t\":\n\tListReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\x12\r\n\x05users\x18\x03 \x03(\t\"!\n\rDeleteRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"-\n\x0b\x44\x65leteReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t2\xdb\x04\n\nChatServer\x12\x38\n\nChatStream\x12\x14.grpc.ConnectRequest\x1a\x12.grpc.ConnectReply0\x01\x12\x37\n\x0bSendMessage\x12\x14.grpc.MessageRequest\x1a\x12.grpc.MessageReply\x12\x30\n\x06Signup\x12\x13.grpc.SignupRequest\x1a\x11.grpc.SignupReply\x12-\n\x05Login\x12\x12.grpc.LoginRequest\x1a\x10.grpc.LoginReply\x12\x30\n\x06Logout\x12\x13.grpc.LogoutRequest\x1a\x11.grpc.LogoutReply\x12*\n\x04List\x12\x11.grpc.ListRequest\x1a\x0f.grpc.ListReply\x12\x30\n\x06\x44\x65lete\x12\x13.grpc.DeleteRequest\x1a\x11.grpc.DeleteReply\x12;\n\rIsMasterQuery\x12\x15.grpc.IsMasterRequest\x1a\x13.grpc.IsMasterReply\x12<\n\nAddConnect\x12\x17.grpc.AddConnectRequest\x1a\x15.grpc.AddConnectReply\x12\x30\n\x06\x43ommit\x12\x13.grpc.CommitRequest\x1a\x11.grpc.CommitReply\x12<\n\nDisconnect\x12\x17.grpc.DisconnectRequest\x1a\x15.grpc.DisconnectReplyb\x06proto3'
 )
 
 
@@ -47,6 +47,91 @@ _EMPTY = _descriptor.Descriptor(
   ],
   serialized_start=20,
   serialized_end=27,
+)
+
+
+_DISCONNECTREQUEST = _descriptor.Descriptor(
+  name='DisconnectRequest',
+  full_name='grpc.DisconnectRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='requester_port', full_name='grpc.DisconnectRequest.requester_port', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='replier_port', full_name='grpc.DisconnectRequest.replier_port', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='is_master', full_name='grpc.DisconnectRequest.is_master', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=29,
+  serialized_end=113,
+)
+
+
+_DISCONNECTREPLY = _descriptor.Descriptor(
+  name='DisconnectReply',
+  full_name='grpc.DisconnectReply',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='success', full_name='grpc.DisconnectReply.success', index=0,
+      number=1, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='error', full_name='grpc.DisconnectReply.error', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=115,
+  serialized_end=164,
 )
 
 
@@ -105,8 +190,8 @@ _COMMITREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=29,
-  serialized_end=125,
+  serialized_start=166,
+  serialized_end=262,
 )
 
 
@@ -144,8 +229,8 @@ _COMMITREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=127,
-  serialized_end=172,
+  serialized_start=264,
+  serialized_end=309,
 )
 
 
@@ -183,8 +268,8 @@ _ADDCONNECTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=174,
-  serialized_end=239,
+  serialized_start=311,
+  serialized_end=376,
 )
 
 
@@ -222,8 +307,8 @@ _ADDCONNECTREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=241,
-  serialized_end=290,
+  serialized_start=378,
+  serialized_end=427,
 )
 
 
@@ -247,8 +332,8 @@ _ISMASTERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=292,
-  serialized_end=309,
+  serialized_start=429,
+  serialized_end=446,
 )
 
 
@@ -279,8 +364,8 @@ _ISMASTERREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=311,
-  serialized_end=342,
+  serialized_start=448,
+  serialized_end=479,
 )
 
 
@@ -325,8 +410,8 @@ _MESSAGEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=344,
-  serialized_end=412,
+  serialized_start=481,
+  serialized_end=549,
 )
 
 
@@ -364,8 +449,8 @@ _MESSAGEREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=414,
-  serialized_end=460,
+  serialized_start=551,
+  serialized_end=597,
 )
 
 
@@ -396,8 +481,8 @@ _CONNECTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=462,
-  serialized_end=497,
+  serialized_start=599,
+  serialized_end=634,
 )
 
 
@@ -449,8 +534,8 @@ _CONNECTREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=499,
-  serialized_end=581,
+  serialized_start=636,
+  serialized_end=718,
 )
 
 
@@ -481,8 +566,8 @@ _SIGNUPREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=583,
-  serialized_end=616,
+  serialized_start=720,
+  serialized_end=753,
 )
 
 
@@ -520,8 +605,8 @@ _SIGNUPREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=618,
-  serialized_end=663,
+  serialized_start=755,
+  serialized_end=800,
 )
 
 
@@ -552,8 +637,8 @@ _LOGINREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=665,
-  serialized_end=697,
+  serialized_start=802,
+  serialized_end=834,
 )
 
 
@@ -591,8 +676,8 @@ _LOGINREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=699,
-  serialized_end=743,
+  serialized_start=836,
+  serialized_end=880,
 )
 
 
@@ -623,8 +708,8 @@ _LOGOUTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=745,
-  serialized_end=778,
+  serialized_start=882,
+  serialized_end=915,
 )
 
 
@@ -662,8 +747,8 @@ _LOGOUTREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=780,
-  serialized_end=825,
+  serialized_start=917,
+  serialized_end=962,
 )
 
 
@@ -694,8 +779,8 @@ _LISTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=827,
-  serialized_end=855,
+  serialized_start=964,
+  serialized_end=992,
 )
 
 
@@ -740,8 +825,8 @@ _LISTREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=857,
-  serialized_end=915,
+  serialized_start=994,
+  serialized_end=1052,
 )
 
 
@@ -772,8 +857,8 @@ _DELETEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=917,
-  serialized_end=950,
+  serialized_start=1054,
+  serialized_end=1087,
 )
 
 
@@ -811,11 +896,13 @@ _DELETEREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=952,
-  serialized_end=997,
+  serialized_start=1089,
+  serialized_end=1134,
 )
 
 DESCRIPTOR.message_types_by_name['Empty'] = _EMPTY
+DESCRIPTOR.message_types_by_name['DisconnectRequest'] = _DISCONNECTREQUEST
+DESCRIPTOR.message_types_by_name['DisconnectReply'] = _DISCONNECTREPLY
 DESCRIPTOR.message_types_by_name['CommitRequest'] = _COMMITREQUEST
 DESCRIPTOR.message_types_by_name['CommitReply'] = _COMMITREPLY
 DESCRIPTOR.message_types_by_name['AddConnectRequest'] = _ADDCONNECTREQUEST
@@ -844,6 +931,20 @@ Empty = _reflection.GeneratedProtocolMessageType('Empty', (_message.Message,), {
   # @@protoc_insertion_point(class_scope:grpc.Empty)
   })
 _sym_db.RegisterMessage(Empty)
+
+DisconnectRequest = _reflection.GeneratedProtocolMessageType('DisconnectRequest', (_message.Message,), {
+  'DESCRIPTOR' : _DISCONNECTREQUEST,
+  '__module__' : 'chat_pb2'
+  # @@protoc_insertion_point(class_scope:grpc.DisconnectRequest)
+  })
+_sym_db.RegisterMessage(DisconnectRequest)
+
+DisconnectReply = _reflection.GeneratedProtocolMessageType('DisconnectReply', (_message.Message,), {
+  'DESCRIPTOR' : _DISCONNECTREPLY,
+  '__module__' : 'chat_pb2'
+  # @@protoc_insertion_point(class_scope:grpc.DisconnectReply)
+  })
+_sym_db.RegisterMessage(DisconnectReply)
 
 CommitRequest = _reflection.GeneratedProtocolMessageType('CommitRequest', (_message.Message,), {
   'DESCRIPTOR' : _COMMITREQUEST,
@@ -994,8 +1095,8 @@ _CHATSERVER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=1000,
-  serialized_end=1541,
+  serialized_start=1137,
+  serialized_end=1740,
   methods=[
   _descriptor.MethodDescriptor(
     name='ChatStream',
@@ -1094,6 +1195,16 @@ _CHATSERVER = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_COMMITREQUEST,
     output_type=_COMMITREPLY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='Disconnect',
+    full_name='grpc.ChatServer.Disconnect',
+    index=10,
+    containing_service=None,
+    input_type=_DISCONNECTREQUEST,
+    output_type=_DISCONNECTREPLY,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
